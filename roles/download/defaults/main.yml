@@ -86,6 +86,8 @@ multus_version: "v3.6"
 ovn4nfv_ovn_image_version: "v1.0.0"
 ovn4nfv_k8s_plugin_image_version: "v1.1.0"
 
+azure_vnet_version: "v1.1.7"
+
 # Get kubernetes major version (i.e. 1.17.4 => 1.17)
 kube_major_version: "{{ kube_version | regex_replace('^v([0-9])+\\.([0-9]+)\\.[0-9]+', 'v\\1.\\2') }}"
 crictl_supported_versions:
@@ -102,6 +104,12 @@ etcd_download_url: "https://github.com/coreos/etcd/releases/download/{{ etcd_ver
 cni_download_url: "https://github.com/containernetworking/plugins/releases/download/{{ cni_version }}/cni-plugins-linux-{{ image_arch }}-{{ cni_version }}.tgz"
 calicoctl_download_url: "https://github.com/projectcalico/calicoctl/releases/download/{{ calico_ctl_version }}/calicoctl-linux-{{ image_arch }}"
 crictl_download_url: "https://github.com/kubernetes-sigs/cri-tools/releases/download/{{ crictl_version }}/crictl-{{ crictl_version }}-{{ ansible_system | lower }}-{{ image_arch }}.tar.gz"
+azure_vnet_download_url: "https://github.com/Azure/azure-container-networking/releases/download/{{ azure_vnet_version }}/azure-vnet-cni-linux-amd64-{{ azure_vnet_version }}.tgz"
+
+azure_vnet_checksums:
+  linux:
+    amd64:
+      v1.1.7: a6392098cdf8853c7cc0699d7d7994f96ee1be8d794008ecb97ecda194e7505e
 
 crictl_checksums:
   arm:
@@ -375,6 +383,8 @@ kubectl_binary_checksum: "{{ kubectl_checksums[image_arch][kube_version] }}"
 kubeadm_binary_checksum: "{{ kubeadm_checksums[image_arch][kubeadm_version] }}"
 calicoctl_binary_checksum: "{{ calicoctl_binary_checksums[image_arch][calico_ctl_version] }}"
 crictl_binary_checksum: "{{ crictl_checksums[image_arch][crictl_version] }}"
+
+azure_vnet_binary_checksum: "{{ azure_vnet_checksums['linux'][image_arch][azure_vnet_version] }}"
 
 # Containers
 # In some cases, we need a way to set --registry-mirror or --insecure-registry for docker,
@@ -1135,6 +1145,20 @@ downloads:
     groups:
     - kube-master
 
+  azure_vnet:
+    enabled: "{{ kube_network_plugin == 'azure-vnet' }}"
+    file: true
+    version: "{{ azure_vnet_version }}"
+    dest: "{{ local_release_dir }}/azure-vnet-cni-{{ azure_vnet_version }}"
+    sha256: "{{ azure_vnet_binary_checksum }}"
+    url: "{{ azure_vnet_download_url }}"
+    unarchive: true
+    owner: "root"
+    mode: "0755"
+    groups:
+    - k8s-cluster
+
+    
 download_defaults:
   container: false
   file: false

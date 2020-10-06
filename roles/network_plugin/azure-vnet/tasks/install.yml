@@ -1,0 +1,44 @@
+---
+- name: Azure-vnet | Copy azure-vnet binaries from download dir
+  copy:
+    src: "{{ local_release_dir }}/azure-vnet-cni-linux-{{ azure_vnet_version}}/{{ item }}"
+    dest: "{{ bin_dir }}/{{ item }}"
+    mode: 0755
+    remote_src: yes
+  with_items:
+    - azure-vnet
+    - azure-vnet-ipam
+    - azure-vnet-ipamv6
+    - azure-vnet-telemetry
+
+- name: Azure | Check if host has NetworkManager
+  # noqa 303 Should we use service_facts for this?
+  command: systemctl show NetworkManager
+  register: nm_check
+  failed_when: false
+  changed_when: false
+
+- name: Azure | Ensure NetworkManager conf.d dir
+  file:
+    path: "/etc/NetworkManager/conf.d"
+    state: directory
+    recurse: yes
+  when: nm_check.rc == 0
+
+- name: Azure | Prevent NetworkManager from managing Azure interfaces
+  copy:
+    content: |
+      [keyfile]
+      unmanaged-devices=interface-name:azure*
+    dest: /etc/NetworkManager/conf.d/azure.conf
+  when: false
+  notify: Azure | Reload NetworkManager
+
+- name: Azure | Write Azure cni config
+  template:
+    src: "cni-azure-vnet.conflist.j2"
+    dest: "/etc/cni/net.d/azure.conflist.template"
+    owner: kube
+  register: azure_conflist
+  notify: reset_azure_cni
+
