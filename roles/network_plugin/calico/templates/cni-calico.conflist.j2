@@ -27,6 +27,12 @@
         "type": "host-local",
         "subnet": "usePodCidr"
       },
+{% elif (calico_ipam_azure_vnet is defined) and (calico_ipam_azure_subnet_cidr is defined) %}
+      "ipam": {
+        "type": "azure-vnet-ipam",
+        "environment": "azure",
+        "subnet": "{{ calico_ipam_azure_subnet_cidr }}"
+      },
 {% else %}
       "ipam": {
         "type": "calico-ipam",

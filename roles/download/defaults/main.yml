@@ -1146,7 +1146,7 @@ downloads:
     - kube-master
 
   azure_vnet:
-    enabled: "{{ kube_network_plugin == 'azure-vnet' }}"
+    enabled: "{{ calico_ipam_azure_vnet is defined }}"
     file: true
     version: "{{ azure_vnet_version }}"
     dest: "{{ local_release_dir }}/azure-vnet-cni-{{ azure_vnet_version }}"
